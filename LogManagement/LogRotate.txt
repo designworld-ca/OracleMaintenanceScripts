@@ -1,0 +1,53 @@
+# https://kkempf.wordpress.com/2011/06/10/rotating-listener-logs-without-bouncing-the-listener/
+#!/bin/bash
+# usage on command line ./logrotate.sh >  logrotate.log 2>&1
+
+# put the date and time into the DATE_STAMP variable
+DATESTAMP=$(date +"%Y%m%d%H%M%S")
+echo DATESTAMP is $DATESTAMP
+
+
+# there may be more than one listener but we only want to rotate logs
+# where the listener log is being used recently
+# files like listener .log accessed less than 7 days ago
+# also need names of listeners with ps -ef | grep tns
+listenerlist=($(find /u01 -mtime -7 -name listener*.log 2>/dev/null))
+listenerlistlength=${#listenerlist[@]}
+echo number of listener logs is $listenerlistlength
+for i in ${#listenerlist[@]}
+do
+# put the full filepath and name of the listener log into LOGFILE variable
+read -r $i < logpath.temp
+LOGFILE=$line
+# put the directory path of the listener log into the DIRPATH variable
+DIRPATH=${line%/*}
+# call the listener and change the log file to a temp log file 
+# so no entries are lost during the maintenance
+
+echo showing variables
+echo $LOGFILE
+echo $DIRPATH
+
+lsnrctl <<END
+set current_listener listener
+set log_file listener_temp
+exit
+END
+# rename the log file
+mv $LOGFILE $LOGFILE.${DATESTAMP}
+# call the listener and change the log file back to the previous file
+lsnrctl <<END
+set current_listener listener
+set log_file listener
+exit
+END
+# compress the old log file and name it with the current date
+zip $LOGFILE.${DATESTAMP}.zip $LOGFILE.${DATESTAMP}
+rm $LOGFILE.${DATESTAMP}
+
+
+# delete existing .zip files older than 60 days
+find $DIRPATH -name "*.zip"  -mtime +60 -delete
+
+done
+
