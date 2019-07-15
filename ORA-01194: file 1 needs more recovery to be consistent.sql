@@ -58,9 +58,11 @@ SQL> alter database open resetlogs;
 May crash, if so, mount and alter database open resetlogs or just alter database open
 
 Database altered.
+
+**DO NOT SKIP REBUILDING THE UNDO**
 Create new undo tablespace and set “undo_tablespace” parameter to the new undo tablespace and change “undo_management” parameter to AUTO:
 
-SQL> CREATE UNDO TABLESPACE undo2 datafile '/u01/app/oracle/oradata/RTS_NEW/undo2_df1.dbf' size 200m autoextend on maxsize 30G;
+SQL> CREATE UNDO TABLESPACE undo2 datafile '/u07/undo_redo/DNISC101/undotbs2_01.dbf' SIZE 1024M;
 Tablespace created.
 SQL> alter system set undo_tablespace = undo2 scope=spfile;
 System altered.
@@ -70,3 +72,11 @@ Now bounce your database.
 
 SQL> shutdown immediate
 SQL> startup
+Rebuild original undo
+
+create undo tablespace UNDOTBS1 datafile '/u07/undo_redo/DNISC101/undotbs1_01.dbf' size 5000M;
+ALTER TABLESPACE UNDOTBS1 ADD DATAFILE '/u08/undo_redo/DNISC101/undotbs1_02.dbf' size 5000M;
+alter system set undo_tablespace=UNDOTBS1;
+drop tablespace undo2 including contents and datafiles;
+shutdown immediate
+startup;
