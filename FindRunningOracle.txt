@@ -3,3 +3,7 @@
 # does not cover instances that are shut down
 
 ps -ef | grep ora_smon
+
+# just show the instance names
+ps -ef | grep ora_smon | grep -v grep | sed 's/.*smon_//'
+
