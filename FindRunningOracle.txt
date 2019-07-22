@@ -1,0 +1,5 @@
+# on Linux lists all system processes with ora_smon in the name
+# should list all running oracle  
+# does not cover instances that are shut down
+
+ps -ef | grep ora_smon
