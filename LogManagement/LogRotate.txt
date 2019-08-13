@@ -1,53 +1,39 @@
-# https://kkempf.wordpress.com/2011/06/10/rotating-listener-logs-without-bouncing-the-listener/
 #!/bin/bash
-# usage on command line ./logrotate.sh >  logrotate.log 2>&1
+#*****************************************************************
+# File: listener_clear_env.sh                                    *
+# Created: 2019-08-08 Kevin LaRoche                              *
+# Purpose: Listener Clear                                        *
+# History:  For Linux Single home                                *
+# Usage: ./listener_clear_env.sh > listener_clear_env.log 2>&1   *
+#*****************************************************************
+set -e
+#**********************************************************
+#Set Environment                                          *
+#**********************************************************
+. oraenv <<EOF
+TEST
+EOF
+LOGFILEPATH=($(find /u01 -iname "listener*.log" 2>/dev/null | head -n1))
+LOGFILE=$(basename "$LOGFILEPATH")
+CURRENT_LSNR=$(cat $ORACLE_HOME/network/admin/listener.ora | grep '^LISTENER' |egrep -v 'SID|ADR|#' |cut -d"=" -f1 | sort -u)
+echo "Logfile for ${HOSTNAME} is at ${LOGFILEPATH}"
+echo "Listener is ${CURRENT_LSNR}"
 
-# put the date and time into the DATE_STAMP variable
-DATESTAMP=$(date +"%Y%m%d%H%M%S")
-echo DATESTAMP is $DATESTAMP
-
-
-# there may be more than one listener but we only want to rotate logs
-# where the listener log is being used recently
-# files like listener .log accessed less than 7 days ago
-# also need names of listeners with ps -ef | grep tns
-listenerlist=($(find /u01 -mtime -7 -name listener*.log 2>/dev/null))
-listenerlistlength=${#listenerlist[@]}
-echo number of listener logs is $listenerlistlength
-for i in ${#listenerlist[@]}
-do
-# put the full filepath and name of the listener log into LOGFILE variable
-read -r $i < logpath.temp
-LOGFILE=$line
-# put the directory path of the listener log into the DIRPATH variable
-DIRPATH=${line%/*}
-# call the listener and change the log file to a temp log file 
-# so no entries are lost during the maintenance
-
-echo showing variables
-echo $LOGFILE
-echo $DIRPATH
-
-lsnrctl <<END
-set current_listener listener
-set log_file listener_temp
+lsnrctl <<EOF
+set current_listener $CURRENT_LSNR
+set log_status off
 exit
-END
-# rename the log file
-mv $LOGFILE $LOGFILE.${DATESTAMP}
-# call the listener and change the log file back to the previous file
-lsnrctl <<END
-set current_listener listener
-set log_file listener
+EOF
+
+mv ${LOGFILEPATH}  ${LOGFILEPATH}.old
+
+echo "Renamed " $LOGFILE to $LOGFILE.old
+
+lsnrctl <<EOF
+set current_listener $CURRENT_LSNR
+set log_status on
 exit
-END
-# compress the old log file and name it with the current date
-zip $LOGFILE.${DATESTAMP}.zip $LOGFILE.${DATESTAMP}
-rm $LOGFILE.${DATESTAMP}
-
-
-# delete existing .zip files older than 60 days
-find $DIRPATH -name "*.zip"  -mtime +60 -delete
-
-done
+EOF
+DATESTAMP=$(date +"%Y-%B-%d %T %p")
+echo "finished listener logs for ${HOSTNAME} at ${DATESTAMP}"
 
