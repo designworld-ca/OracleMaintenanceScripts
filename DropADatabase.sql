@@ -12,7 +12,7 @@ exit
 --delete empty folders
 --delete admin trace folders
 --run
---on windows
+--on windows stop database services first
 sc delete <service name>
 
 --delete from tnsnames and listener.ora
