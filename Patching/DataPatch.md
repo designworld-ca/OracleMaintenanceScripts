@@ -9,9 +9,11 @@ select PATCH_ID, ACTION_TIME, status from dba_registry_sqlpatch order by action_
 ## create blackout in OEM Cloud Control
 
 ## for each instance shutdown all databases
+```
 ALTER PLUGGABLE DATABASE ALL CLOSE IMMEDIATE;
 shutdown immediate
 lsnrctl stop
+```
 
 ## confirm everything is down
 ps -ef --sort=cmd | grep ora_smon
@@ -22,14 +24,16 @@ $ORACLE_HOME/bin/relink all
 ## for each instance startup all
 STARTUP
 ## verify everything is open
+```
 SHOW PDBS
 cd $ORACLE_HOME/OPatch
 DATAPATCH -verbose
-
+```
 
 ## on each instance where datapatch did something
 STARTUP
 ## verify everything is open
+```
 SHOW PDBS
 
 SET LINESIZE 800
@@ -58,7 +62,7 @@ select  status, message, action
 from   pdb_plug_in_violations 
 where  status !='RESOLVED';
 
-
+```
 
 lsnrctl start
 
