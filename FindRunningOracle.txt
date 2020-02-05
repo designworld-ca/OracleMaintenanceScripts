@@ -7,3 +7,7 @@ ps -ef --sort=cmd | grep ora_smon
 # just show the instance names
 ps -ef | grep ora_smon | grep -v grep | sed 's/.*smon_//' | sort
 
+#or show all instances that can be easily accessed
+
+cat /etc/oratab
+
