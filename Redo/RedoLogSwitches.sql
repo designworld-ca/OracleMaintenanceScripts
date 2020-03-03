@@ -1,3 +1,4 @@
+--shows time in minutes between log switches
 select  b.recid,
         to_char(b.first_time, 'dd-mon-yy hh:mi:ss') start_time,
         a.recid,
