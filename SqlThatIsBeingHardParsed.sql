@@ -1,7 +1,9 @@
+
+```
 select sql_text,parse_calls, rows_processed, executions, version_count
 from v$sqlarea 
 where version_count > 1
-and module is NULL
+and module is NULL;
 
  select parse_calls, executions
  from v$sql order by parse_calls desc;
@@ -11,5 +13,5 @@ and module is NULL
  WHERE s2.name LIKE '%parse count%'
  GROUP BY s2.name
  ORDER BY 1,2;
- 
+``` 
 
